@@ -2123,7 +2123,7 @@ function renderStudentDashboard() {
 }
 
 /* ─── STUDENT RESULTS ─── */
-function renderStudentResults() {
+/*function renderStudentResults() {
   const avg = Math.round(PUBLISHED_RESULTS.reduce((a,b)=>a+b.total,0)/PUBLISHED_RESULTS.length);
   const termTotal = PUBLISHED_RESULTS.reduce((a,b)=>a+b.total,0);
   return `
@@ -2202,7 +2202,416 @@ function renderStudentResults() {
       </div>
     </div>
   `;
+}*/
+
+<!-- Replace the existing renderStudentResults function with this -->
+</script>
+<script>
+/* ─── STUDENT RESULTS ─── */
+function renderStudentResults() {
+    return `
+    <div class="page-header">
+        <div class="page-title">My Results</div>
+        <div class="page-sub">1st Term · 2024/2025 Session</div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-bar" id="results-tabs">
+        <button class="tab-btn active" data-tab="live" onclick="switchResultsTab('live')">📊 Live Scores</button>
+        <button class="tab-btn" data-tab="published" onclick="switchResultsTab('published')">📄 Published Results</button>
+    </div>
+
+    <!-- TAB 1: LIVE SCORES (Matches your LiveScoresTab.jsx structure) -->
+    <div id="live-scores-tab" class="results-tab">
+        ${renderLiveScores()}
+    </div>
+
+    <!-- TAB 2: PUBLISHED RESULTS (Matches your PublishedResultsTab.jsx structure) -->
+    <div id="published-results-tab" class="results-tab" style="display: none;">
+        ${renderPublishedResults()}
+    </div>
+    `;
 }
+
+/* ─── LIVE SCORES TAB ─── */
+function renderLiveScores() {
+    // Data structure matching your LiveScoresTab: subjects with assessments
+    const subjectsData = [
+        {
+            subject_name: "Mathematics",
+            assessments: [
+                { name: "CA1", weight: 20, max_score: 20, score: 18, is_open: true },
+                { name: "CA2", weight: 20, max_score: 20, score: null, is_open: true },
+                { name: "Examination", weight: 60, max_score: 70, score: null, is_open: false }
+            ]
+        },
+        {
+            subject_name: "English Language",
+            assessments: [
+                { name: "CA1", weight: 20, max_score: 20, score: 15, is_open: true },
+                { name: "CA2", weight: 20, max_score: 20, score: 13, is_open: true },
+                { name: "Examination", weight: 60, max_score: 70, score: null, is_open: false }
+            ]
+        },
+        {
+            subject_name: "Physics",
+            assessments: [
+                { name: "CA1", weight: 20, max_score: 20, score: 16, is_open: true },
+                { name: "CA2", weight: 20, max_score: 20, score: null, is_open: true },
+                { name: "Examination", weight: 60, max_score: 70, score: null, is_open: false }
+            ]
+        },
+        {
+            subject_name: "Chemistry",
+            assessments: [
+                { name: "CA1", weight: 20, max_score: 20, score: 12, is_open: true },
+                { name: "CA2", weight: 20, max_score: 20, score: 11, is_open: true },
+                { name: "Examination", weight: 60, max_score: 70, score: null, is_open: false }
+            ]
+        },
+        {
+            subject_name: "Biology",
+            assessments: [
+                { name: "CA1", weight: 20, max_score: 20, score: 14, is_open: true },
+                { name: "CA2", weight: 20, max_score: 20, score: 16, is_open: true },
+                { name: "Examination", weight: 60, max_score: 70, score: null, is_open: false }
+            ]
+        }
+    ];
+
+    function getProgressColor(percentage) {
+        if (percentage < 40) return 'var(--danger)';
+        if (percentage < 60) return 'var(--warning)';
+        if (percentage < 80) return 'var(--brand)';
+        return 'var(--success)';
+    }
+
+    function calculatePercentage(score, maxScore) {
+        if (!score || score === 0 || !maxScore || maxScore === 0) return 0;
+        return (score / maxScore) * 100;
+    }
+
+    let html = '<div class="live-scores-container">';
+    
+    for (const subject of subjectsData) {
+        html += `
+            <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                <div style="font-weight: 700; font-size: 18px; margin-bottom: 16px; color: var(--text);">
+                    ${subject.subject_name}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+        `;
+        
+        for (const assessment of subject.assessments) {
+            const percentage = calculatePercentage(assessment.score, assessment.max_score);
+            const hasScore = assessment.score !== null && assessment.score !== undefined;
+            const isOpen = assessment.is_open === true;
+            const progressColor = hasScore ? getProgressColor(percentage) : 'var(--text-muted)';
+            
+            html += `
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                        <span style="font-weight: 600;">
+                            ${assessment.name} (${assessment.weight}%)
+                        </span>
+                        <span style="color: ${hasScore ? getProgressColor(percentage) : 'var(--text-muted)'}; font-weight: ${hasScore ? 600 : 400};">
+                            ${hasScore ? `${assessment.score}/${assessment.max_score}` : '—'}
+                        </span>
+                    </div>
+                    <div style="background: var(--surface-2); border-radius: var(--radius-sm); height: 8px; overflow: hidden;">
+                        <div style="width: ${percentage}%; height: 100%; background: ${progressColor}; border-radius: var(--radius-sm); transition: width 0.3s ease; opacity: ${isOpen ? 1 : 0.6};">
+                        </div>
+                    </div>
+                    ${!isOpen && hasScore ? '<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Assessment closed</div>' : ''}
+                </div>
+            `;
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    if (subjectsData.length === 0) {
+        html = `
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <div class="empty-title">No open assessments</div>
+                <div class="empty-sub">You don't have any active assessments at this time. Check back when your teachers open assessments.</div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+/* ─── PUBLISHED RESULTS TAB ─── */
+function renderPublishedResults() {
+    // Published results data matching your PublishedResultsTab structure
+    const publishedResults = [
+        { term_name: "3rd Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 502, grade: "B2", published_at: "2024-04-05" },
+        { term_name: "2nd Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 489, grade: "B3", published_at: "2024-01-20" },
+        { term_name: "1st Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 531, grade: "B2", published_at: "2023-10-15" }
+    ];
+    
+    // Subject scores for the detailed view (when clicking a result)
+    const subjectScores = {
+        "3rd Term 2023/2024": [
+            { subject: "Mathematics", ca1: 18, ca2: 17, exam: 61, total: 96, grade: "A1" },
+            { subject: "English Language", ca1: 15, ca2: 13, exam: 52, total: 80, grade: "B2" },
+            { subject: "Physics", ca1: 14, ca2: 16, exam: 56, total: 86, grade: "B2" },
+            { subject: "Chemistry", ca1: 12, ca2: 11, exam: 44, total: 67, grade: "C5" },
+            { subject: "Biology", ca1: 16, ca2: 14, exam: 58, total: 88, grade: "B2" },
+            { subject: "Economics", ca1: 19, ca2: 18, exam: 66, total: 103, grade: "A1" },
+            { subject: "Government", ca1: 13, ca2: 12, exam: 47, total: 72, grade: "C4" }
+        ]
+    };
+    
+    let html = `
+        <div class="published-header" style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                <select class="form-select" id="session-filter" style="width: auto; min-width: 150px;" onchange="filterPublishedResults()">
+                    <option value="all">All Sessions</option>
+                    <option value="2023/2024">2023/2024</option>
+                </select>
+                <select class="form-select" id="term-filter" style="width: auto; min-width: 150px;" onchange="filterPublishedResults()">
+                    <option value="all">All Terms</option>
+                    <option value="3rd Term 2023/2024">3rd Term 2023/2024</option>
+                    <option value="2nd Term 2023/2024">2nd Term 2023/2024</option>
+                    <option value="1st Term 2023/2024">1st Term 2023/2024</option>
+                </select>
+            </div>
+        </div>
+        <div id="published-results-list">
+    `;
+    
+    for (const result of publishedResults) {
+        html += `
+            <div class="card" style="margin-bottom: 12px; padding: 16px; cursor: pointer;" onclick="showResultDetail('${result.term_name}')">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 16px;">${result.term_name}</div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                            ${result.session_name} · ${result.class_name} ${result.class_arm_name}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                            Published: ${new Date(result.published_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; font-size: 22px; color: var(--brand);">${result.total_score}</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Grade: ${result.grade}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (publishedResults.length === 0) {
+        html = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <div class="empty-title">No published results</div>
+                <div class="empty-sub">No results have been published yet.</div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    // Store subject scores globally for modal access
+    window.subjectScoresData = subjectScores;
+    
+    return html;
+}
+
+/* ─── RESULT DETAIL MODAL ─── */
+function showResultDetail(termName) {
+    const scores = window.subjectScoresData[termName];
+    if (!scores) return;
+    
+    const totalScore = scores.reduce((sum, s) => sum + s.total, 0);
+    const avgGrade = scores.find(s => s.grade)?.grade || '—';
+    
+    let tableHtml = `
+        <div style="overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px;">
+                <thead>
+                    <tr style="background: var(--surface-2); border-bottom: 2px solid var(--border);">
+                        <th style="padding: 12px; text-align: left;">Subject</th>
+                        <th style="padding: 12px; text-align: center;">CA1 (20%)</th>
+                        <th style="padding: 12px; text-align: center;">CA2 (20%)</th>
+                        <th style="padding: 12px; text-align: center;">Exam (60%)</th>
+                        <th style="padding: 12px; text-align: center;">TOTAL</th>
+                        <th style="padding: 12px; text-align: center;">GRADE</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    for (const subject of scores) {
+        tableHtml += `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 12px; font-weight: 500;">${subject.subject}</td>
+                <td style="padding: 12px; text-align: center;">${subject.ca1}</td>
+                <td style="padding: 12px; text-align: center;">${subject.ca2}</td>
+                <td style="padding: 12px; text-align: center;">${subject.exam}</td>
+                <td style="padding: 12px; text-align: center; font-weight: 600;">${subject.total}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <span class="badge ${subject.grade.startsWith('A') ? 'badge-green' : subject.grade.startsWith('B') ? 'badge-brand' : 'badge-yellow'}">${subject.grade}</span>
+                </td>
+            </tr>
+        `;
+    }
+    
+    tableHtml += `
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px; padding: 16px; background: var(--surface-2); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Term Total</div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--brand);">${totalScore}</div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Overall Grade</div>
+                    <div style="font-size: 24px; font-weight: 800; color: var(--brand);">${avgGrade}</div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Class Average</div>
+                    <div style="font-size: 24px; font-weight: 800;">74.5</div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Position (Class)</div>
+                    <div style="font-size: 24px; font-weight: 800;">12th</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showModal(termName, 'Click anywhere to close', tableHtml);
+}
+
+/* ─── FILTER PUBLISHED RESULTS ─── */
+function filterPublishedResults() {
+    const sessionFilter = document.getElementById('session-filter')?.value || 'all';
+    const termFilter = document.getElementById('term-filter')?.value || 'all';
+    
+    const allResults = [
+        { term_name: "3rd Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 502, grade: "B2", published_at: "2024-04-05" },
+        { term_name: "2nd Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 489, grade: "B3", published_at: "2024-01-20" },
+        { term_name: "1st Term 2023/2024", session_name: "2023/2024", class_name: "JSS 2", class_arm_name: "A", total_score: 531, grade: "B2", published_at: "2023-10-15" }
+    ];
+    
+    let filtered = [...allResults];
+    
+    if (sessionFilter !== 'all') {
+        filtered = filtered.filter(r => r.session_name === sessionFilter);
+    }
+    
+    if (termFilter !== 'all') {
+        filtered = filtered.filter(r => r.term_name === termFilter);
+    }
+    
+    const container = document.getElementById('published-results-list');
+    if (!container) return;
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <div class="empty-title">No matching results</div>
+                <div class="empty-sub">No results match your filters.</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    for (const result of filtered) {
+        html += `
+            <div class="card" style="margin-bottom: 12px; padding: 16px; cursor: pointer;" onclick="showResultDetail('${result.term_name}')">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 16px;">${result.term_name}</div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                            ${result.session_name} · ${result.class_name} ${result.class_arm_name}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                            Published: ${new Date(result.published_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; font-size: 22px; color: var(--brand);">${result.total_score}</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Grade: ${result.grade}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+/* ─── TAB SWITCHING ─── */
+function switchResultsTab(tab) {
+    const liveTab = document.getElementById('live-scores-tab');
+    const publishedTab = document.getElementById('published-results-tab');
+    const tabs = document.querySelectorAll('#results-tabs .tab-btn');
+    
+    if (tab === 'live') {
+        liveTab.style.display = 'block';
+        publishedTab.style.display = 'none';
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0].classList.add('active');
+    } else {
+        liveTab.style.display = 'none';
+        publishedTab.style.display = 'block';
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[1].classList.add('active');
+    }
+}
+
+// Make functions global
+window.switchResultsTab = switchResultsTab;
+window.showResultDetail = showResultDetail;
+window.filterPublishedResults = filterPublishedResults;
+</script>
+
+<!-- Add CSS for animations -->
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .live-scores-container {
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .results-tab {
+        animation: fadeIn 0.25s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .badge-brand {
+        background: var(--brand-light);
+        color: var(--brand);
+    }
+    
+    .badge-yellow {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+</style>
+<script>
+
 
 /* ─── PARENT DASHBOARD ─── */
 function renderParentDashboard() {
